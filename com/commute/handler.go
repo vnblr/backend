@@ -3,6 +3,7 @@ package commute
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -47,7 +48,21 @@ func Initialize() {
 //Function Handler is the entry-point which is registered in the http handler.
 //Every http request lands here.
 func Handler(w http.ResponseWriter, r *http.Request) {
+	if !strings.Contains(r.URL.Path, "commute/map") {
+		return
+	}
+
 	reqCh <- 1
+
+	//Parse the parameters in the request
+	ip := r.RemoteAddr
+	lat := r.URL.Query().Get("lat")
+	lng := r.URL.Query().Get("lng")
+	user := r.URL.Query().Get("user")
+	ua := r.Header.Get("User-Agent")
+
+	fmt.Println(time.Now(), "\t", user, "\t", ip, "\t", lat, "\t", lng, "\t", ua,
+		"\t", r.URL.RawQuery)
 
 	fmt.Fprintf(w, "Request received :")
 

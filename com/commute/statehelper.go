@@ -5,15 +5,15 @@ import (
 	"math"
 )
 
-const DRIVER_STATE  = 1
-const RIDER_STATE  = 2
+const DRIVER_STATE = 1
+const RIDER_STATE = 2
 
 //commState struct basically holds the current set of a commuter. Geo location
-//whether she is already connected to a driver/rider etc. 
-type commState struct{
-	lat float64
-	lng float64
-	curr_state int
+//whether she is already connected to a driver/rider etc.
+type commState struct {
+	lat         float64
+	lng         float64
+	curr_state  int
 	lastUptTime int64
 
 	//listReqs list
@@ -28,6 +28,7 @@ type Delta struct {
 	Lat float64
 	Lon float64
 }
+
 const earthRadiusMetres float64 = 6371000
 
 func (p Point) Delta(point Point) Delta {
@@ -44,9 +45,8 @@ func (p Point) toRadians() Point {
 	}
 }
 
-
-//DistanceBetwnPts function returns the haversine distance between two geo points. Instead of 
-//including package paultag/go-haversine, just copied the code since it is too small. 
+//DistanceBetwnPts function returns the haversine distance between two geo points. Instead of
+//including package paultag/go-haversine, just copied the code since it is too small.
 func DistanceBetwnPts(origin, position Point) float64 {
 	origin = origin.toRadians()
 	position = position.toRadians()

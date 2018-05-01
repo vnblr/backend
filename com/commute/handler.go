@@ -40,6 +40,8 @@ func printStat() {
 //Function Initialize does all the channel etc initialization and launches threads to monitor
 func Initialize() {
 	reqCh = make(chan int, 100)
+	gStateDS = make(map[string]CommState, 1000)
+	gLoggedInUsers = make(map[string]string, 1000)
 	//A parallel thread to dump stats
 	go printStat()
 

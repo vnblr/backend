@@ -1,6 +1,7 @@
 package commute
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -40,16 +41,29 @@ func TestUpdateAuthError(t *testing.T) {
 func TestUpdateExample(t *testing.T) {
 	Initialize()
 	token1 := newToken("newuser1")
-	if countLoggedInUsers() != 1 && countStateUsers() != 0 {
+	if countLoggedInUsers() != 1 || countStateUsers() != 0 { //fixme
 		t.Errorf("Count mismatch in DS1. LoggedIn:", countLoggedInUsers(), " in DS:", countStateUsers())
 	}
+	fmt.Println("TestUpdateExample here....remove. cnt:", countStateUsers()) //fixme
 	r1 := updateState("newuser1", 7.1, 10.2, token1)
-	if countLoggedInUsers() != 1 && countStateUsers() != 1 {
+	if countLoggedInUsers() != 1 || countStateUsers() != 1 {
 		t.Errorf("Count mismatch in DS2. LoggedIn:", countLoggedInUsers(), " in DS:", countStateUsers(), " ret:", r1)
 	}
 	//Another update
 	r2 := updateState("newuser1", 7.2, 10.3, token1)
-	if countLoggedInUsers() != 1 && countStateUsers() != 1 {
+	if countLoggedInUsers() != 1 || countStateUsers() != 1 {
 		t.Errorf("Count mismatch in DS3. LoggedIn:", countLoggedInUsers(), " in DS:", countStateUsers(), " ret:", r2)
+	}
+
+	//Confirm update
+	obj1 := getCurrentState("newuser1")
+	if obj1.lat != 7.2 || obj1.lng != 10.3 {
+		t.Errorf("Normal update did not work. Users:", countLoggedInUsers(), " lat:", obj1.lat, " lng:", obj1.lng)
+	}
+
+	//Nonexistent user
+	obj2 := getCurrentState("nonuser")
+	if obj2 != nil {
+		t.Errorf("nonExistent user get did not work. Users:", countLoggedInUsers(), " lat:", obj2.lat, " lng:", obj2.lng)
 	}
 }

@@ -89,3 +89,8 @@ func updateState(userName string, lat float64, lng float64, token string) string
 	return "Update Success!"
 
 }
+
+//Get the current value as is stored.
+func getCurrentState(userName string) *CommState {
+	return gStateDS[userName]
+}

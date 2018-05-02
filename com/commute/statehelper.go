@@ -12,7 +12,7 @@ const RIDER_STATE = 2
 
 //One is a complete data structure and other is used just for authentication. While we can use only one
 //it may be needed to put TTL and other constraints on auth later.
-var gStateDS map[string]CommState
+var gStateDS map[string]*CommState
 var gLoggedInUsers map[string]string
 
 //CommState struct basically holds the current set of a commuter. Geo location
@@ -73,9 +73,9 @@ func updateState(userName string, lat float64, lng float64, token string) string
 		return "Authentication error! you are not logged in"
 	}
 
-	var currState CommState
+	var currState *CommState
 	if currState2, ok := gStateDS[userName]; ok == false {
-		currState = CommState{}
+		currState = &CommState{}
 		currState.arrReqs = make([]int, 0)
 		currState.arrConnectedWith = make([]int, 0)
 		gStateDS[userName] = currState

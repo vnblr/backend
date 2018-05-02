@@ -2,9 +2,14 @@ package commute
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
+
+var wg sync.WaitGroup
 
 func TestUserCreation(t *testing.T) {
 	Initialize()
@@ -66,4 +71,46 @@ func TestUpdateExample(t *testing.T) {
 	if obj2 != nil {
 		t.Errorf("nonExistent user get did not work. Users:", countLoggedInUsers(), " lat:", obj2.lat, " lng:", obj2.lng)
 	}
+}
+
+func createAndUpdateUser(userName string, t *testing.T) {
+	defer wg.Done()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	token := newToken(userName)
+
+	//Fire some random updates
+	retVal := ""
+	for i := 1; i < 1000; i++ {
+		retVal = updateState(userName, 1.2, 2.2, token)
+	}
+	//Final update
+	lat := r.Float64()
+	lng := r.Float64()
+	retVal = updateState(userName, lat, lng, token)
+
+	time.Sleep(100 * time.Millisecond)
+	currState := getCurrentState(userName)
+	if currState.lat != lat || currState.lng != lng {
+		t.Errorf("createAndUpdateUser error: lat/lng:", lat, lng, " set lat/lng", currState.lat, currState.lng, " r:", retVal)
+	}
+
+}
+
+//Lets add many users from across threads
+func TestMultithreads(t *testing.T) {
+	Initialize()
+	numThreads := 1000 //Every go invokation is not a physical thread..but still is a proxy for concurrency.
+
+	for i := 1; i <= numThreads; i++ {
+		wg.Add(1)
+		go createAndUpdateUser(fmt.Sprintf("MyUser", i), t)
+	}
+	fmt.Println("TestMultithreads: waiting for threads to come out.", time.Now())
+	wg.Wait()
+	fmt.Println("TestMultithreads: threads came out.", time.Now())
+
+	if countLoggedInUsers() != numThreads || countStateUsers() != numThreads {
+		t.Errorf("Error in TestMultithreads: final counts logged users:", countLoggedInUsers(), " state users:", countStateUsers())
+	}
+
 }

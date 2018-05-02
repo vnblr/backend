@@ -34,9 +34,9 @@ type CommState struct {
 	driverOrRider int //Mode of the user.
 
 	//arrReqs is a the pending requests from co-commuters since the last time state was refreshed
-	arrReqs []int
+	arrReqs []string
 	//arrConnectedWith is the list of co-commuters the current user is tied to.
-	arrConnectedWith []int
+	arrConnectedWith []string
 }
 
 //puts a new user into the token data structures and returns the token for auth
@@ -110,8 +110,8 @@ func updateState(userName string, lat float64, lng float64, token string, driver
 	var currState *CommState
 	if currState2, ok := gStateDS[userName]; ok == false {
 		currState = &CommState{}
-		currState.arrReqs = make([]int, 0)
-		currState.arrConnectedWith = make([]int, 0)
+		currState.arrReqs = make([]string, 0)
+		currState.arrConnectedWith = make([]string, 0)
 		currState.driverOrRider = driverorrider
 		gStateDS[userName] = currState
 	} else {
@@ -148,20 +148,20 @@ func searchMatches(userName string, mode int) ([]matchUserDetails, error) {
 	gStateLock.RLock()
 	defer gStateLock.RUnlock()
 
-	if mode != DRIVER_STATE && mode != RIDER_STATE {
-		return nil, errors.New(fmt.Sprintf("Invalid mode:", mode))
-	}
-
 	var arrMatchedUsers []matchUserDetails = make([]matchUserDetails, 0)
 	var currState *CommState = nil
 	var ok bool
 	if currState, ok = gStateDS[userName]; ok == false {
 		return nil, errors.New(fmt.Sprintf("User does not exist in DS:", userName))
 	}
+	if mode != currState.driverOrRider {
+		return nil, errors.New(fmt.Sprintf("Invalid mode:", mode))
+	}
+
+	currPoint := Point{Lat: currState.lat, Lon: currState.lng}
 
 	//A rider is typically looking all drivers nearby.
 	if mode == RIDER_STATE {
-		currPoint := Point{Lat: currState.lat, Lon: currState.lng}
 		for u, uState := range gStateDS {
 			if uState.driverOrRider == DRIVER_STATE { //can match a rider only to a driver
 				//They match only if they are at reasonable distance.
@@ -184,7 +184,32 @@ func searchMatches(userName string, mode int) ([]matchUserDetails, error) {
 		}
 		return arrMatchedUsers, nil //Normal return
 	}
-	//Now the user has to be driver.
-	return nil, nil
+	//Now the user has to be driver. Here, you just go by riders' requests. Scan through, update latest
+	//distance and just return
+	for _, reqUser := range currState.arrReqs {
+
+		//For now, if the requested user is not found, we just move on. Ideally we should error out and handle.
+		if reqUserState, ok := gStateDS[reqUser]; ok {
+			if reqUserState.driverOrRider == RIDER_STATE { //Again, lets ignore if the state is wrong
+				newPoint := Point{Lat: reqUserState.lat, Lon: reqUserState.lng}
+				dist := DistanceBetwnPts(currPoint, newPoint)
+
+				if dist > MAX_WAIT_DISTANCE {
+					continue
+				}
+
+				//Now this is an eligible user. Lets add.
+				newUserDetails := matchUserDetails{reqUser, reqUserState.lat, reqUserState.lng, dist}
+				arrMatchedUsers = append(arrMatchedUsers, newUserDetails)
+
+				if len(arrMatchedUsers) >= MAX_MATCHED_USERS {
+					break //Come out now. Found enough
+				}
+
+			}
+		}
+	}
+
+	return arrMatchedUsers, nil
 
 }

@@ -173,3 +173,57 @@ func TestSearchDrivers(t *testing.T) {
 	}
 
 }
+
+//Checks if the nearby drivers/riders logic is working
+func TestSearchRiders(t *testing.T) {
+	Initialize()
+
+	cases := []struct {
+		user     string
+		lat, lng float64
+	}{
+		{"user1", 100.001, 200.002},
+		{"user2", 100.001, 200.003},
+		{"user3", 100.001, 200.004},
+		{"user4", 100.001, 200.005},
+		{"user5", 100.001, 200.002},
+		{"user6", 100.001, 200.002},
+		{"user7", 150.001, 230.002},
+		{"user8", 150.002, 230.001},
+	}
+	//First update the DS
+	for _, c := range cases {
+		token := newToken(c.user)
+		updateState(c.user, c.lat, c.lng, token, RIDER_STATE)
+	}
+	//testuser:for now dump in any location
+	testToken := newToken("testuser")
+	updateState("testuser", 10.0, 20.0, testToken, DRIVER_STATE)
+	//Lets fill it with all requests
+	currState := getCurrentState("testuser")
+	for _, c := range cases {
+		currState.arrReqs = append(currState.arrReqs, c.user)
+	}
+	var retArr []matchUserDetails
+
+	//search should result in no nearby users
+	updateState("testuser", 10.0, 20.0, testToken, DRIVER_STATE)
+	retArr, _ = searchMatches("testuser", DRIVER_STATE)
+	if len(retArr) != 0 {
+		t.Errorf("Error in searchUsers. len retArr:", len(retArr))
+	}
+
+	//search should return max possible users
+	updateState("testuser", 100.001, 200.003, testToken, DRIVER_STATE)
+	retArr, _ = searchMatches("testuser", DRIVER_STATE)
+	if len(retArr) != MAX_MATCHED_USERS {
+		t.Errorf("Error in searchUsers max. len retArr:", len(retArr))
+	}
+	//search should return 2 possible users
+	updateState("testuser", 150.001, 230.003, testToken, DRIVER_STATE)
+	retArr, _ = searchMatches("testuser", DRIVER_STATE)
+	if len(retArr) != 2 {
+		t.Errorf("Error in searchUsers max. len retArr:", len(retArr))
+	}
+
+}

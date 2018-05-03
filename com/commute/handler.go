@@ -71,7 +71,7 @@ func processRequest(userName string, latlngstr string,
 	everyTypeParsed, err = strconv.Atoi(eventtype)
 	if err != nil || (everyTypeParsed != EVENT_LOGIN && everyTypeParsed != EVENT_HEARTBEAT &&
 		everyTypeParsed != EVENT_JOINREQ && everyTypeParsed != EVENT_JOINACCEPT) {
-		return "", errors.New(fmt.Sprintf("ERROR in mode parameter:", eventtype))
+		return "", errors.New(fmt.Sprintf("ERROR in eventtype parameter:", eventtype))
 	}
 
 	//Now hand the thing over to the updater
@@ -92,7 +92,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	ip := r.RemoteAddr
 	user := r.URL.Query().Get("user")
 	ua := r.Header.Get("User-Agent")
-	token := r.Header.Get("token")
+	token := r.URL.Query().Get("token")
 
 	//The following are legacy reasons we are keep params as is. Lets chagne both app and these strings soon.
 	latlngstr := r.URL.Query().Get("param") //looks like "100.112,300.117"

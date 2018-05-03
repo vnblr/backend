@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -66,6 +67,8 @@ func newToken(userName string) string {
 	} else {
 		newToken = string(out)
 	}
+
+	newToken = strings.TrimSuffix(newToken, "\n") //TODO - for some reason, am getting a trail
 
 	gLoggedInUsers[userName] = newToken
 	return newToken

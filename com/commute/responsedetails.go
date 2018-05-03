@@ -43,13 +43,13 @@ func (r *ResponseDetails) toString(state int) string {
 	case RIDER_STATE:
 		retStr = "riderresppayload"
 	}
-	retStr = fmt.Sprintf(retStr, ",", len(r.arrConnectedUsers))
-	for c := range r.arrConnectedUsers {
-		retStr = fmt.Sprintf(retStr, ",", c)
+	retStr = fmt.Sprintf("%s,%d", retStr, len(r.arrConnectedUsers))
+	for _, c := range r.arrConnectedUsers {
+		retStr = fmt.Sprintf("%s,%s", retStr, c)
 	}
-	retStr = fmt.Sprintf(retStr, ",", len(r.arrNearbyCommuters))
+	retStr = fmt.Sprintf("%s,%d", retStr, len(r.arrNearbyCommuters))
 	for _, n := range r.arrNearbyCommuters {
-		retStr = fmt.Sprintf(retStr, ",", n.userName, ",", n.lat, ",", n.lng)
+		retStr = fmt.Sprintf("%s,%s,%.2f,%.2f", retStr, n.userName, n.lat, n.lng)
 	}
 
 	return retStr

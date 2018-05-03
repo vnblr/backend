@@ -63,7 +63,7 @@ func newToken(userName string) string {
 	out, err := exec.Command("uuidgen").Output()
 	if err != nil {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		newToken = fmt.Sprintf("SomeString:", r.Int63())
+		newToken = fmt.Sprintf("SomeString:%d", r.Int63())
 	} else {
 		newToken = string(out)
 	}
@@ -155,8 +155,8 @@ func updateStateAttrs(userName string, lat float64, lng float64, driverorrider i
 	defer gStateLock.Unlock()
 	var currState *CommState
 	if currState2, ok := gStateDS[userName]; ok == false {
-		fmt.Sprintf("ERROR in updateStateAttrs: user does not exist :", userName, " len:", len(gStateDS))
-		return errors.New(fmt.Sprintf("Error while updating profile : ", userName, " does not exist!"))
+		fmt.Sprintf("ERROR in updateStateAttrs: user does not exist :%s len: %d", userName, len(gStateDS))
+		return errors.New(fmt.Sprintf("Error while updating profile : %s does not exist!", userName))
 	} else {
 		currState = currState2
 	}
@@ -178,8 +178,8 @@ func fillAlreadyJoinedAttr(r *ResponseDetails, userName string) error {
 
 	var currState *CommState
 	if currState2, ok := gStateDS[userName]; ok == false {
-		fmt.Sprintf("ERROR in fillAlreadyJoinedAttr: user does not exist :", userName, " len:", len(gStateDS))
-		return errors.New(fmt.Sprintf("Error while updating resp profile : ", userName, " does not exist!"))
+		fmt.Sprintf("ERROR in fillAlreadyJoinedAttr: user does not exist :%s len:%d", userName, len(gStateDS))
+		return errors.New(fmt.Sprintf("Error while updating resp profile : %s does not exist!", userName))
 	} else {
 		currState = currState2
 	}
@@ -201,15 +201,15 @@ func registerReq(userName string, other string) (string, error) {
 
 	var currState *CommState
 	if currState2, ok := gStateDS[other]; ok == false {
-		fmt.Sprintf("ERROR in registerReq: user does not exist :", other, " len:", len(gStateDS))
-		return "", errors.New(fmt.Sprintf("Error while registering req : ", other, " does not exist!"))
+		fmt.Sprintf("ERROR in registerReq: user does not exist :%s len:%d", other, len(gStateDS))
+		return "", errors.New(fmt.Sprintf("Error while registering req :%s does not exist!", other))
 	} else {
 		currState = currState2
 	}
 
 	//Now lets register request in this state, if possible.
 	if len(currState.arrReqs) >= MAX_MATCHED_USERS {
-		return "", errors.New(fmt.Sprintf("Error while registering req : ", other, " is already overloaded!"))
+		return "", errors.New(fmt.Sprintf("Error while registering req :%s is already overloaded!", other))
 	}
 
 	//See if is already registered
@@ -220,7 +220,7 @@ func registerReq(userName string, other string) (string, error) {
 	}
 	//Finally...register
 	currState.arrReqs = append(currState.arrReqs, userName)
-	return fmt.Sprintf("Success! You are now registered with: ", other), nil
+	return fmt.Sprintf("Success! You are now registered with: %s", other), nil
 }
 
 //Mark the two as "connected". Used in display and analytics subsequently
@@ -231,15 +231,15 @@ func joinUsers(rider string, driver string) (string, error) {
 
 	var riderState *CommState
 	if tempState, ok := gStateDS[rider]; ok == false {
-		fmt.Sprintf("ERROR in joinUsers: user does not exist :", rider, " len:", len(gStateDS))
-		return "", errors.New(fmt.Sprintf("Error while joining user : ", rider, " does not exist!"))
+		fmt.Sprintf("ERROR in joinUsers: user does not exist :%s len:%d", rider, len(gStateDS))
+		return "", errors.New(fmt.Sprintf("Error while joining user :%s does not exist!", rider))
 	} else {
 		riderState = tempState
 	}
 	var driverState *CommState
 	if tempState2, ok := gStateDS[driver]; ok == false {
-		fmt.Sprintf("ERROR in joinUsers: user does not exist :", driver, " len:", len(gStateDS))
-		return "", errors.New(fmt.Sprintf("Error while joining user : ", driver, " does not exist!"))
+		fmt.Sprintf("ERROR in joinUsers: user does not exist :%s len:%d", driver, len(gStateDS))
+		return "", errors.New(fmt.Sprintf("Error while joining user : %s does not exist!", driver))
 	} else {
 		driverState = tempState2
 	}
@@ -273,7 +273,7 @@ func updateState(userName string, lat float64, lng float64, token string, driver
 	//Ensure eventtype sanity
 	if eventType != EVENT_HEARTBEAT && eventType != EVENT_JOINREQ &&
 		eventType != EVENT_JOINACCEPT && eventType != EVENT_LOGIN {
-		return "", errors.New(fmt.Sprintf("Invalid eventtype", eventType))
+		return "", errors.New(fmt.Sprintf("Invalid eventtype:%d", eventType))
 	}
 	var err error
 	var retStr string
@@ -366,10 +366,10 @@ func searchMatches(userName string, mode int) ([]matchUserDetails, error) {
 	var currState *CommState = nil
 	var ok bool
 	if currState, ok = gStateDS[userName]; ok == false {
-		return nil, errors.New(fmt.Sprintf("User does not exist in DS:", userName))
+		return nil, errors.New(fmt.Sprintf("User does not exist in DS:%s", userName))
 	}
 	if mode != currState.driverOrRider {
-		return nil, errors.New(fmt.Sprintf("Invalid mode:", mode))
+		return nil, errors.New(fmt.Sprintf("Invalid mode:%d", mode))
 	}
 
 	currPoint := Point{Lat: currState.lat, Lon: currState.lng}

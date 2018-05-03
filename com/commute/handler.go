@@ -50,28 +50,28 @@ func processRequest(userName string, latlngstr string,
 	//Now lets process the params
 	var latLongArr []string = strings.Split(latlngstr, ",")
 	if len(latLongArr) != 2 {
-		return "", errors.New(fmt.Sprintf("latlongstr wrong format:", latlngstr))
+		return "", errors.New(fmt.Sprintf("latlongstr wrong format:%s", latlngstr))
 	}
 	var latFlt, lngFlt float64
 	var err1, err2, err error
 	latFlt, err1 = strconv.ParseFloat(latLongArr[0], 64)
 	if err1 != nil {
-		return "", errors.New(fmt.Sprintf("ERROR in lat parameter:", err1.Error()))
+		return "", errors.New(fmt.Sprintf("ERROR in lat parameter:%s", err1.Error()))
 	}
 	lngFlt, err2 = strconv.ParseFloat(latLongArr[1], 64)
 	if err2 != nil {
-		return "", errors.New(fmt.Sprintf("ERROR in lng parameter:", err2.Error()))
+		return "", errors.New(fmt.Sprintf("ERROR in lng parameter:%s", err2.Error()))
 	}
 	var driverRiderMode int
 	driverRiderMode, err = strconv.Atoi(driverorrider)
 	if err != nil || (driverRiderMode != RIDER_STATE && driverRiderMode != DRIVER_STATE) {
-		return "", errors.New(fmt.Sprintf("ERROR in mode parameter:", driverorrider))
+		return "", errors.New(fmt.Sprintf("ERROR in mode parameter:%s", driverorrider))
 	}
 	var everyTypeParsed int
 	everyTypeParsed, err = strconv.Atoi(eventtype)
 	if err != nil || (everyTypeParsed != EVENT_LOGIN && everyTypeParsed != EVENT_HEARTBEAT &&
 		everyTypeParsed != EVENT_JOINREQ && everyTypeParsed != EVENT_JOINACCEPT) {
-		return "", errors.New(fmt.Sprintf("ERROR in eventtype parameter:", eventtype))
+		return "", errors.New(fmt.Sprintf("ERROR in eventtype parameter:%s", eventtype))
 	}
 
 	//Now hand the thing over to the updater
@@ -107,7 +107,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, retValue)
 	}
 
-	fmt.Fprintf(w, "Request processed successfully :")
+	//fmt.Fprintf(w, "Request processed successfully :")
 
 	//Ideally should be using some logging system. TODO.
 	fmt.Println(time.Now(), "\t", user, "\t", ip, "\t", latlngstr, "\t", ua,

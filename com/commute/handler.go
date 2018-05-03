@@ -100,6 +100,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	eventtype := r.URL.Query().Get("eventtype")
 	driverorrider := r.URL.Query().Get("mode")
 
+	//Legacy mess. todo - change these to integers asap!
+	switch eventtype {
+	case "login":
+		eventtype = "1"
+	case "":
+		eventtype = "2" //default is heartbeat
+	case "joinrequest":
+		eventtype = "3"
+	case "joinaccept":
+		eventtype = "4"
+	default:
+		eventtype = "-1" //invalid
+	}
+
 	retValue, err := processRequest(user, latlngstr, driverorrider, token, status, eventtype)
 	if err != nil {
 		fmt.Fprintf(w, "ERROR! :", err)

@@ -217,7 +217,7 @@ func registerReq(userName string, other string) (string, error) {
 	}
 	//Finally...register
 	currState.arrReqs = append(currState.arrReqs, userName)
-	return fmt.Sprintf("You are now registered with: ", other), nil
+	return fmt.Sprintf("Success! You are now registered with: ", other), nil
 }
 
 //Mark the two as "connected". Used in display and analytics subsequently
@@ -336,7 +336,7 @@ func updateState(userName string, lat float64, lng float64, token string, driver
 
 }
 
-//Get the current value as is stored.
+//Get the current value as is stored. TODO - clone and send. Otherwise the caller may mutate
 func getCurrentState(userName string) *CommState {
 	gStateLock.RLock()
 	defer gStateLock.RUnlock()

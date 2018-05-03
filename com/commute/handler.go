@@ -42,31 +42,41 @@ func Initialize() {
 
 }
 
-//entry point calls this.
-func processRequest(userName string, lat string, lng string) (string, error) {
-	var myToken string
-	myToken = getToken(userName)
-
-	if myToken == "" {
-		myToken = newToken(userName)
-	}
-
+//entry point calls this...directly accepts strings as given in URL and then does
+//parsing and validation. Keep it as is..easier to unit-test.
+func processRequest(userName string, latlngstr string,
+	driverorrider string, token string, other string,
+	eventtype string) (string, error) {
 	//Now lets process the params
+	var latLongArr []string = strings.Split(latlngstr, ",")
+	if len(latLongArr) != 2 {
+		return "", errors.New(fmt.Sprintf("latlongstr wrong format:", latlngstr))
+	}
 	var latFlt, lngFlt float64
-	var err1, err2 error
-	latFlt, err1 = strconv.ParseFloat(lat, 64)
+	var err1, err2, err error
+	latFlt, err1 = strconv.ParseFloat(latLongArr[0], 64)
 	if err1 != nil {
 		return "", errors.New(fmt.Sprintf("ERROR in lat parameter:", err1.Error()))
 	}
-
-	lngFlt, err2 = strconv.ParseFloat(lng, 64)
+	lngFlt, err2 = strconv.ParseFloat(latLongArr[1], 64)
 	if err2 != nil {
 		return "", errors.New(fmt.Sprintf("ERROR in lng parameter:", err2.Error()))
 	}
+	var driverRiderMode int
+	driverRiderMode, err = strconv.Atoi(driverorrider)
+	if err != nil || (driverRiderMode != RIDER_STATE && driverRiderMode != DRIVER_STATE) {
+		return "", errors.New(fmt.Sprintf("ERROR in mode parameter:", driverorrider))
+	}
+	var everyTypeParsed int
+	everyTypeParsed, err = strconv.Atoi(eventtype)
+	if err != nil || (everyTypeParsed != EVENT_LOGIN && everyTypeParsed != EVENT_HEARTBEAT &&
+		everyTypeParsed != EVENT_JOINREQ && everyTypeParsed != EVENT_JOINACCEPT) {
+		return "", errors.New(fmt.Sprintf("ERROR in mode parameter:", eventtype))
+	}
 
 	//Now hand the thing over to the updater
-	retValue, err := updateState(userName, latFlt, lngFlt, myToken, RIDER_STATE, "", EVENT_LOGIN)
-	return retValue, err
+	retValue, err := updateState(userName, latFlt, lngFlt, token, driverRiderMode, other, everyTypeParsed)
+	return retValue, err //Return as is
 }
 
 //Function Handler is the entry-point which is registered in the http handler.
@@ -80,20 +90,27 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	//Parse the parameters in the request
 	ip := r.RemoteAddr
-	lat := r.URL.Query().Get("lat")
-	lng := r.URL.Query().Get("lng")
 	user := r.URL.Query().Get("user")
 	ua := r.Header.Get("User-Agent")
+	token := r.Header.Get("token")
 
-	retValue, err := processRequest(user, lat, lng)
+	//The following are legacy reasons we are keep params as is. Lets chagne both app and these strings soon.
+	latlngstr := r.URL.Query().Get("param") //looks like "100.112,300.117"
+	status := r.URL.Query().Get("status")   //This actually is the "other"
+	eventtype := r.URL.Query().Get("eventtype")
+	driverorrider := r.URL.Query().Get("mode")
+
+	retValue, err := processRequest(user, latlngstr, driverorrider, token, status, eventtype)
 	if err != nil {
 		fmt.Fprintf(w, "ERROR! :", err)
 	} else {
 		fmt.Fprintf(w, retValue)
 	}
 
-	fmt.Fprintf(w, "Request received :")
-	fmt.Println(time.Now(), "\t", user, "\t", ip, "\t", lat, "\t", lng, "\t", ua,
+	fmt.Fprintf(w, "Request processed successfully :")
+
+	//Ideally should be using some logging system. TODO.
+	fmt.Println(time.Now(), "\t", user, "\t", ip, "\t", latlngstr, "\t", ua,
 		"\t", r.URL.RawQuery, "\t", retValue, "\t", err)
 
 }

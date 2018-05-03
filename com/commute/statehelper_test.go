@@ -51,7 +51,6 @@ func TestUpdateExample(t *testing.T) {
 	if countLoggedInUsers() != 1 || countStateUsers() != 1 { //fixme
 		t.Errorf("Count mismatch in DS1. LoggedIn:", countLoggedInUsers(), " in DS:", countStateUsers())
 	}
-	fmt.Println("TestUpdateExample here....remove. cnt:", countStateUsers()) //fixme
 	r1, _ := updateState("newuser1", 7.1, 10.2, token1, RIDER_STATE, "", EVENT_HEARTBEAT)
 	if countLoggedInUsers() != 1 || countStateUsers() != 1 {
 		t.Errorf("Count mismatch in DS2. LoggedIn:", countLoggedInUsers(), " in DS:", countStateUsers(), " ret:", r1)
@@ -224,6 +223,82 @@ func TestSearchRiders(t *testing.T) {
 	retArr, _ = searchMatches("testuser", DRIVER_STATE)
 	if len(retArr) != 2 {
 		t.Errorf("Error in searchUsers max. len retArr:", len(retArr))
+	}
+
+}
+
+//Test a complete sequence once login, search, request, accept. This is not a unit-test per se but a
+//overall check
+func TestSearchJoinAccept(t *testing.T) {
+	//Login a driver
+	tokenDriver, _ := updateState("driver1", 100.001, 200.004, "", DRIVER_STATE, "", EVENT_LOGIN)
+	//Login a rider
+	tokenRider, _ := updateState("rider1", 100.002, 200.001, "", RIDER_STATE, "", EVENT_LOGIN)
+
+	//Lets search for nearby drivers.
+	retStr, err := updateState("rider1", 100.002, 200.001, tokenRider, RIDER_STATE, "", EVENT_HEARTBEAT)
+	if err != nil || !strings.Contains(retStr, "driver1") {
+		t.Errorf("Error in TestSearchJoinAccept: err:", err.Error(), " retStr:", retStr)
+	}
+
+	//Lets send a join request
+	retStr, err = updateState("rider1", 100.002, 200.001, tokenRider, RIDER_STATE, "driver1", EVENT_JOINREQ)
+	if err != nil || !strings.Contains(retStr, "Success") {
+		t.Errorf("Error in TestSearchJoinAccept: err:", err.Error(), " retStr:", retStr)
+	}
+
+	//Let the driver accept it
+	retStr, err = updateState("driver1", 100.002, 200.001, tokenDriver, DRIVER_STATE, "rider1", EVENT_JOINACCEPT)
+	if err != nil || !strings.Contains(retStr, "Success") {
+		t.Errorf("Error in TestSearchJoinAccept: err:", err.Error(), " retStr:", retStr)
+	}
+
+	//Lets confirm the DS settings..
+	driverState := getCurrentState("driver1")
+	riderState := getCurrentState("rider1")
+	if len(driverState.arrReqs) != 0 && len(driverState.arrConnectedWith) != 1 &&
+		len(riderState.arrReqs) != 0 && len(riderState.arrConnectedWith) != 1 {
+		t.Errorf("Error in TestSearchJoinAccept: ",
+			"driver.req:", len(driverState.arrReqs), " driver.conn:", len(driverState.arrConnectedWith),
+			"rider.req:", len(riderState.arrReqs), " rider.conn:", len(riderState.arrConnectedWith))
+
+	}
+
+}
+
+//Test a complete sequence once login, search, request, accept. This is not a unit-test per se but a
+//overall check
+func TestMuiltiSearchJoinAccept(t *testing.T) {
+	//Login a driver
+	_, _ = updateState("driver1", 100.001, 200.004, "", DRIVER_STATE, "", EVENT_LOGIN)
+	//Login a rider
+	tokenRider, _ := updateState("rider1", 100.002, 200.001, "", RIDER_STATE, "", EVENT_LOGIN)
+	tokenRider2, _ := updateState("rider2", 100.001, 200.008, "", RIDER_STATE, "", EVENT_LOGIN)
+
+	//Lets search for nearby drivers.
+	retStr, err := updateState("rider1", 100.002, 200.001, tokenRider, RIDER_STATE, "", EVENT_HEARTBEAT)
+	if err != nil || !strings.Contains(retStr, "driver1") {
+		t.Errorf("Error in TestMuiltiSearchJoinAccept: err:", err.Error(), " retStr:", retStr)
+	}
+
+	//Lets send a join request
+	retStr, err = updateState("rider1", 100.002, 200.001, tokenRider, RIDER_STATE, "driver1", EVENT_JOINREQ)
+	if err != nil || !strings.Contains(retStr, "Success") {
+		t.Errorf("Error in TestMuiltiSearchJoinAccept: err:", err.Error(), " retStr:", retStr)
+	}
+
+	//The other rider too sees the driver
+	retStr, err = updateState("rider2", 100.002, 200.001, tokenRider2, RIDER_STATE, "driver1", EVENT_JOINREQ)
+	if err != nil || !strings.Contains(retStr, "Success") {
+		t.Errorf("Error in TestMuiltiSearchJoinAccept: err:", err.Error(), " retStr:", retStr)
+	}
+
+	//Lets confirm the DS settings..
+	driverState := getCurrentState("driver1")
+	if len(driverState.arrReqs) != 2 && len(driverState.arrConnectedWith) != 0 {
+		t.Errorf("Error in TestMuiltiSearchJoinAccept: ",
+			"driver.req:", len(driverState.arrReqs), " driver.conn:", len(driverState.arrConnectedWith))
+
 	}
 
 }

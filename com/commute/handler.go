@@ -65,8 +65,8 @@ func processRequest(userName string, lat string, lng string) (string, error) {
 	}
 
 	//Now hand the thing over to the updater
-	retValue := updateState(userName, latFlt, lngFlt, myToken, RIDER_STATE)
-	return retValue, nil
+	retValue, err := updateState(userName, latFlt, lngFlt, myToken, RIDER_STATE, "", EVENT_LOGIN)
+	return retValue, err
 }
 
 //Function Handler is the entry-point which is registered in the http handler.

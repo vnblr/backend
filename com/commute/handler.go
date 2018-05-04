@@ -113,6 +113,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	default:
 		eventtype = "-1" //invalid
 	}
+	if latlngstr == "" {
+		latlngstr = "0.0,0.0"
+	}
+	if driverorrider == "" {
+		driverorrider = "1"
+	}
 
 	retValue, err := processRequest(user, latlngstr, driverorrider, token, status, eventtype)
 	if err != nil {
